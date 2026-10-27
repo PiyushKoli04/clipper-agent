@@ -1,0 +1,13 @@
+flask>=3.0
+yt-dlp>=2025.1.1
+faster-whisper>=1.0.3
+pysubs2>=1.7
+opencv-python>=4.9,<5
+mediapipe>=0.10.14
+numpy>=1.24
+Pillow>=10.0
+requests>=2.31
+python-dotenv>=1.0
+youtube-transcript-api>=0.6.2
+# optional: better silence/energy analysis
+# librosa>=0.10

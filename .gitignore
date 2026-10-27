@@ -1,0 +1,26 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+
+# Storage & runtime artifacts (ignore all generated files, keep empty folders via .gitkeep)
+storage/*
+!storage/*/
+storage/*/*
+!storage/*/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

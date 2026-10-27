@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShortsAgent — AI Shorts Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+  @font-face {
+    font-family: "HookFont";
+    src: url("/fonts/Anton-Regular.ttf") format("truetype");
+    font-display: swap;
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand-row">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
+      <div>
+        <h1>Shorts<span>Agent</span></h1>
+        <p class="sub">Long YouTube videos &rarr; viral 9:16 Shorts · 100% local</p>
+      </div>
+    </div>
+    <nav class="nav-tabs" role="tablist">
+      <button id="tab-gen" class="tab-btn active" role="tab" aria-selected="true" type="button">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>Generator</span>
+      </button>
+      <button id="tab-library" class="tab-btn" role="tab" aria-selected="false" type="button">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
+        <span>Clips Library</span>
+        <span id="library-count" class="badge-pill">0</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ==================== GENERATOR VIEW ==================== -->
+  <section id="view-generator" class="view-section active">
+    <div class="generator-layout">
+      <!-- Left: Input & Options Form -->
+      <div class="gen-col-form">
+        <form id="gen-form" class="panel glass-panel" autocomplete="off">
+          <div class="panel-header">
+            <h2>Generate New Shorts</h2>
+            <span class="panel-tag">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+              </svg>
+              <span>AI Powered</span>
+            </span>
+          </div>
+
+          <div class="url-row">
+            <label class="sr-only" for="url">YouTube URL</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </span>
+              <input id="url" name="url" type="url" inputmode="url" required 
+                     placeholder="Paste YouTube link, e.g. https://www.youtube.com/watch?v=..." autofocus>
+            </div>
+            <button id="go" class="primary" type="submit">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Generate Shorts</span>
+            </button>
+          </div>
+
+          <!-- Existing Video Banner (shown if link was already processed) -->
+          <div id="existing-alert" class="existing-banner" hidden>
+            <div class="existing-info">
+              <div class="existing-icon">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </div>
+              <div>
+                <strong id="existing-title">This video already has clips generated!</strong>
+                <p id="existing-count-msg" class="existing-sub">You can view existing clips below, or generate brand new ones without duplicates.</p>
+              </div>
+            </div>
+            <div class="existing-actions">
+              <button type="button" id="btn-view-existing" class="btn-secondary btn-sm">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span>View Existing Clips</span>
+              </button>
+              <button type="button" id="btn-force-new" class="primary btn-sm">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Generate NEW Clips</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <label>
+              <span class="label-title">Clips Count</span>
+              <input id="num_clips" type="number" min="1" max="20" value="3">
+            </label>
+
+            <label>
+              <span class="label-title">Video Layout</span>
+              <select id="layout">
+                <option value="blur" selected>Blur Background (fit 16:9)</option>
+                <option value="smart">Smart Crop (face tracking)</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="label-title">Overlay Mode</span>
+              <select id="overlay_mode">
+                <option value="both" selected>Hook + Captions</option>
+                <option value="hook">Hook Title Only</option>
+                <option value="captions">Captions Only</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="label-title">Hook Title Style</span>
+              <select id="hook_style"></select>
+            </label>
+
+            <label>
+              <span class="label-title">Caption Style</span>
+              <select id="caption_style"></select>
+            </label>
+
+            <label>
+              <span class="label-title">Whisper Model</span>
+              <select id="whisper_model">
+                <option>tiny</option>
+                <option>base</option>
+                <option selected>small</option>
+                <option>medium</option>
+                <option>large-v3</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="label-title">LLM Provider</span>
+              <select id="llm_provider">
+                <option value="gemini" selected>Gemini (Groq &amp; Nemotron fallback)</option>
+                <option value="groq">Groq (Nemotron fallback)</option>
+                <option value="nemotron">NVIDIA Nemotron 70B</option>
+                <option value="ollama">Ollama (Offline local)</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Swatch quick buttons -->
+          <div class="swatches-section">
+            <div class="swatch-row">
+              <span class="swatch-label">Caption Style Preview:</span>
+              <div id="caption-swatches" class="swatch-pills"></div>
+            </div>
+            <div class="swatch-row">
+              <span class="swatch-label">Hook Style Preview:</span>
+              <div id="hook-swatches" class="swatch-pills"></div>
+            </div>
+          </div>
+
+          <details class="polish">
+            <summary>
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Polish & Audio Options</span>
+            </summary>
+            <div class="settings-grid polish-grid">
+              <label>
+                <span class="label-title">Hook Duration (s)</span>
+                <input id="hook_duration" type="number" min="1" max="6" step="0.5" value="3">
+              </label>
+              <label class="chk">
+                <input id="loudnorm" type="checkbox"> 
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <span>Loudness normalize (EBU R128)</span>
+              </label>
+              <label class="chk">
+                <input id="zoom" type="checkbox"> 
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                <span>Cinematic slow zoom-in</span>
+              </label>
+              <label class="chk">
+                <input id="silence_trim" type="checkbox"> 
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="6" cy="6" r="3"></circle>
+                  <circle cx="6" cy="18" r="3"></circle>
+                  <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
+                  <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
+                  <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+                </svg>
+                <span>Trim silences &gt; 0.5s</span>
+              </label>
+              <label class="chk">
+                <input id="progress_bar" type="checkbox"> 
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Bottom progress bar</span>
+              </label>
+              <label>
+                <span class="label-title">Background Music (-22 dB)</span>
+                <select id="music"><option value="">None</option></select>
+              </label>
+              <label>
+                <span class="label-title">Upload Custom Music</span>
+                <input id="music_file" type="file" accept="audio/*">
+              </label>
+            </div>
+          </details>
+        </form>
+
+        <!-- Progress panel -->
+        <section id="progress" class="panel glass-panel" hidden aria-live="polite">
+          <div class="prog-head">
+            <div class="prog-stage-wrap">
+              <span class="spinner"></span>
+              <strong id="stage">Queued</strong>
+            </div>
+            <span id="pct" class="pct-badge">0%</span>
+          </div>
+          <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="bar-fill"></div>
+          </div>
+          <p id="job-error" class="error" role="alert" hidden></p>
+        </section>
+      </div>
+
+      <!-- Right: Dedicated Hardcoded Live 9:16 Style Preview -->
+      <aside class="gen-col-preview">
+        <div class="preview-panel glass-panel">
+          <div class="preview-header">
+            <div>
+              <h3>Live Style Preview</h3>
+              <p class="preview-sub">Instant hardcoded sample of your selected styles</p>
+            </div>
+            <span class="preview-badge">9:16 Short</span>
+          </div>
+
+          <!-- Phone mockup container -->
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div id="hardcoded-stage" class="stage-container layout-blur">
+              <!-- Simulated Video Backdrop -->
+              <div class="stage-bg">
+                <div class="sim-bg-blurred"></div>
+                <div class="sim-fg-video">
+                  <div class="sim-podcaster">
+                    <div class="sim-avatar">
+                      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                      </svg>
+                    </div>
+                    <span class="sim-badge">1080 &times; 1920</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top: Hardcoded Hook Preview -->
+              <div id="pv-hook-wrap" class="pv-hook-box hk-bold_outline">
+                <div class="pv-hook-content">
+                  <span class="pv-hook-line">WAIT FOR</span>
+                  <span class="pv-hook-line">THE ENDING!</span>
+                </div>
+              </div>
+
+              <!-- Lower-Middle: Hardcoded Karaoke Captions Preview -->
+              <div id="pv-caption-wrap" class="pv-caption-box cap-white_yellow">
+                <div class="pv-caption-content">
+                  <span class="cap-word">THIS</span>
+                  <span class="cap-word">IS</span>
+                  <span class="cap-word">HOW</span>
+                  <span class="cap-word active">CAPTIONS</span>
+                  <span class="cap-word">LOOK</span>
+                </div>
+              </div>
+
+              <!-- Bottom: Hardcoded Progress Bar -->
+              <div id="pv-progress-bar" class="pv-bar" hidden></div>
+            </div>
+          </div>
+
+          <!-- Live Custom Text Input for testing -->
+          <div class="preview-controls">
+            <label class="custom-hook-input">
+              <span>Test custom hook in preview:</span>
+              <input id="preview-test-hook" type="text" value="WAIT FOR THE ENDING!" maxlength="40">
+            </label>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Active Video / Generated Clips Grid -->
+    <div class="results-section">
+      <div class="results-header">
+        <h2 id="video-title" class="video-title" hidden></h2>
+      </div>
+      <section id="grid" class="grid" aria-label="Generated clips"></section>
+    </div>
+  </section>
+
+  <!-- ==================== CLIPS LIBRARY VIEW ==================== -->
+  <section id="view-library" class="view-section" hidden>
+    <div class="library-header panel glass-panel">
+      <div>
+        <h2>Saved Clips Library</h2>
+        <p class="sub">All your previously generated videos and rendered vertical shorts are permanently saved here.</p>
+      </div>
+      <div class="library-actions">
+        <button id="refresh-library-btn" class="btn-secondary" type="button">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh Library</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="library-body">
+      <!-- Video selector chips -->
+      <div id="library-videos" class="library-video-pills"></div>
+
+      <!-- Library clips grid -->
+      <div id="library-grid" class="grid" aria-label="Saved clips">
+        <div class="library-empty">
+          <p>Loading your saved clips...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
